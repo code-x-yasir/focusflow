@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FocusFlow | Productivity Tracker</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+</head>
+<body>
+
+<div id="welcome-screen" class="welcome-hero">
+    <div class="hero-content">
+        <h1>Welcome to FocusFlow</h1>
+        <button class="save-btn hero-btn" onclick="enterApp()">Get Started</button>
+    </div>
+</div>
+
+<div id="auth-overlay" class="auth-container" style="display:none;">
+    <div class="auth-card" id="login-card">
+        <div class="auth-tabs">
+            <button id="user-tab" class="active-tab" onclick="setRole('user')">User Login</button>
+            <button id="admin-tab" onclick="setRole('admin')">Admin Login</button>
+        </div>
+        <input type="email" id="login-email" placeholder="Email Address">
+        <input type="password" id="login-password" placeholder="Password">
+        <button class="save-btn" onclick="handleLogin()">Log In</button>
+        <p style="margin-top:15px; color:#bbb;">Don't have an account? <a href="#" onclick="toggleAuthMode()" style="color:var(--accent-purple)">Sign Up</a></p>
+    </div>
+
+    <div class="auth-card" id="signup-card" style="display:none;">
+        <h2 style="color:var(--accent-purple)">Create Account</h2>
+        <input type="email" id="signup-email" placeholder="Email Address">
+        <input type="password" id="signup-password" placeholder="Password">
+        <button class="save-btn" onclick="handleSignup()">Sign Up</button>
+        <p style="margin-top:15px; color:#bbb;">Already have an account? <a href="#" onclick="toggleAuthMode()" style="color:var(--accent-purple)">Log In</a></p>
+    </div>
+</div>
+
+<div id="main-app" style="display:none;">
+    <nav>
+        <span id="user-display"></span>
+        <button id="nav-tracker" onclick="showSection('tracker')">Tracker</button>
+        <button id="nav-stats" onclick="showSection('stats')">Analytics</button>
+        <button onclick="showSection('location-map')">Live Map</button>
+        <button onclick="showSection('about')">About</button>
+        <button id="nav-admin" onclick="showSection('admin-dashboard')" style="display:none;">Admin</button>
+        <button onclick="logout()">Logout</button>
+    </nav>
+
+    <div id="tracker" class="container section">
+        <h1>Daily Time Diary</h1>
+        <div class="category-manager">
+            <input type="text" id="new-category-name" placeholder="New Category...">
+            <button onclick="addCustomCategory()">Add</button>
+        </div>
+        <div id="hour-list"></div>
+        <button class="save-btn" onclick="saveData()">Save Progress</button>
+    </div>
+
+    <div id="stats" class="container section" style="display:none;">
+        <h1>Time Distribution</h1>
+        <canvas id="timeChart"></canvas>
+    </div>
+
+    <div id="location-map" class="container section" style="display:none;">
+        <h1>Live User Map</h1>
+        <p>Sharing your location allows other users to see your focus zone.</p>
+        <div id="map"></div>
+    </div>
+
+    <div id="admin-dashboard" class="container section" style="display:none;">
+        <h1>Admin Panel</h1>
+        <div class="stats-grid">
+            <div class="stat-box"><h3>Today</h3><p id="new-today">0</p></div>
+            <div class="stat-box"><h3>Week</h3><p id="new-week">0</p></div>
+            <div class="stat-box"><h3>Month</h3><p id="new-month">0</p></div>
+        </div>
+        <table id="user-table">
+            <thead>
+            <tr>
+                <th>Email</th>
+                <th>User ID</th>
+                <th>Status</th>
+            </tr>
+            </thead>
+            <tbody id="user-table-body"></tbody>
+        </table>
+    </div>
+    <div id="about" class="container section" style="display:none;">
+        <h1>About FocusFlow</h1>
+
+        <div class="founder-section">
+            <p>An initiative by <strong>Mr. Yasir Arafat</strong> to help you increase your productivity.</p>
+        </div>
+
+        <div class="highlight">
+            <p><strong>FocusFlow</strong> is more than just a diary; it is a comprehensive system designed to bridge the gap between deep work and community accountability.</p>
+        </div>
+
+        <div class="about-grid">
+            <div class="about-card">
+                <h3>The Mission</h3>
+                <p>To empower individuals to take control of their most valuable resource—time. By logging hours and visualizing habits, users can eliminate distractions and reach their peak potential.</p>
+            </div>
+            <div class="about-card">
+                <h3>Core Features</h3>
+                <ul>
+                    <li><strong>Time Tracking:</strong> Interactive 24-hour diary for granular activity logging.</li>
+                    <li><strong>Live Analytics:</strong> Real-time data visualization via Chart.js to identify trends.</li>
+                    <li><strong>Community Map:</strong> A global view of other users in their "Focus Zones."</li>
+                </ul>
+            </div>
+        </div>
+
+        <div style="margin-top: 30px; text-align: center; color: #888; font-size: 0.9rem;">
+            <p>© 2025 FocusFlow Project | Built with Firebase & Leaflet.js</p>
+        </div>
+    </div>
+    <div id="chatbot-container" style="position: fixed; bottom: 20px; right: 20px; z-index: 9999;">
+        <button id="chat-toggle" onclick="toggleChat()" style="background: var(--primary-purple); color: white; border: none; padding: 15px; border-radius: 50%; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
+            💬
+        </button>
+        <div id="chat-window" style="display: none; width: 300px; height: 400px; background: var(--card-bg); border: 1px solid var(--primary-purple); border-radius: 15px; flex-direction: column; position: absolute; bottom: 70px; right: 0; overflow: hidden;">
+            <div style="background: var(--dark-purple); padding: 10px; text-align: center; color: white;">FocusFlow Assistant</div>
+            <div id="chat-messages" style="flex: 1; padding: 10px; overflow-y: auto; color: white; font-size: 0.9rem;"></div>
+            <div style="display: flex; padding: 10px; border-top: 1px solid #444;">
+                <input type="text" id="chat-input" placeholder="Ask for advice..." style="flex: 1; margin: 0; padding: 5px;">
+                <button onclick="sendMessage()" style="background: var(--primary-purple); border: none; color: white; padding: 5px 10px; border-radius: 5px; cursor: pointer;">Send</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<script src="script.js"></script>
+</body>
+</html>
