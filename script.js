@@ -150,6 +150,68 @@ function handleLogin() {
         // If login is successful, the onAuthStateChanged listener below handles the redirect
     }).catch(err => alert(err.message));
 }
+// --- 7. ANALYTICS & SAVING ---
+
+async function saveData() {
+    if (!auth.currentUser) return alert("Please log in to save data.");
+
+    const diaryData = [];
+    for (let i = 0; i < 24; i++) {
+        const task = document.getElementById(`task-${i}`).value;
+        const cat = document.getElementById(`cat-${i}`).value;
+        diaryData.push({ hour: i, task, cat });
+    }
+
+    try {
+        await db.collection("diaries").doc(auth.currentUser.uid).set({
+            lastUpdated: firebase.firestore.FieldValue.serverTimestamp(),
+            entries: diaryData
+        });
+        alert("Progress saved successfully!");
+    } catch (error) {
+        console.error("Save error:", error);
+    }
+}
+
+function updateChart() {
+    const ctx = document.getElementById('timeChart').getContext('2d');
+
+    // 1. Aggregate data from the inputs
+    const counts = {};
+    categories.forEach(c => counts[c] = 0);
+
+    for (let i = 0; i < 24; i++) {
+        const cat = document.getElementById(`cat-${i}`).value;
+        counts[cat] = (counts[cat] || 0) + 1;
+    }
+
+    const dataValues = Object.values(counts);
+    const labels = Object.keys(counts);
+
+    // 2. Create or Update Chart instance
+    if (chartInstance) {
+        chartInstance.data.labels = labels;
+        chartInstance.data.datasets[0].data = dataValues;
+        chartInstance.update(); // Smoothly update the existing chart
+    } else {
+        chartInstance = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Hours Spent',
+                    data: dataValues,
+                    backgroundColor: [
+                        '#8a2be2', '#4b0082', '#e0b0ff', '#6a5acd',
+                        '#9370db', '#ba55d3', '#9932cc'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: { responsive: true, plugins: { legend: { labels: { color: 'white' } } } }
+        });
+    }
+}
 // Toggle between Login and Signup view
 function toggleAuthMode() {
     const loginCard = document.getElementById('login-card');
